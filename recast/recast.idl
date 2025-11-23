@@ -7,15 +7,20 @@
 // ---------------------------------------------------------------------------
 
 interface dtNavMeshParams {
-	// Origin of the navmesh tile grid. [(x, y, z)] float orig[3];
+	// Origin of the navmesh tile grid. [(x, y, z)]
+	// C++: float orig[3];
 	attribute float[] orig;
- float tileWidth;
+
+	// C++: float tileWidth;
 	attribute float tileWidth;
- float tileHeight;
+
+	// C++: float tileHeight;
 	attribute float tileHeight;
- int maxTiles;
+
+	// C++: int maxTiles;
 	attribute long maxTiles;
- int maxPolys;
+
+	// C++: int maxPolys;
 	attribute long maxPolys;
 };
 
@@ -26,38 +31,51 @@ interface dtNavMeshParams {
 // :contentReference[oaicite:1]{index=1}
 // ---------------------------------------------------------------------------
 
-interface dtNavMesh { dtNavMesh::dtNavMesh();
+interface dtNavMesh {
+	// C++: dtNavMesh::dtNavMesh();
 	void dtNavMesh();
- dtStatus init(const dtNavMeshParams* params);
+
+	// C++: dtStatus init(const dtNavMeshParams* params);
 	long init([Const] dtNavMeshParams params);
- dtStatus init(unsigned char* data, const int dataSize, const int flags);
+
+	// C++: dtStatus init(unsigned char* data, const int dataSize, const int flags);
 	// 'data' is a navmesh binary blob.
-	// long init( [Unsigned] char[] data, long dataSize, long flags);
- const dtNavMeshParams* getParams() const;
+	// long init( char[] data, long dataSize, long flags);
+
+	// C++: const dtNavMeshParams* getParams() const;
 	[Const] dtNavMeshParams getParams();
- dtStatus addTile(unsigned char* data, int dataSize, int flags,
+
+	// C++: dtStatus addTile(unsigned char* data, int dataSize, int flags,
 	//                      dtTileRef lastRef, dtTileRef* result);
 	// 'resultRef' receives the resulting dtTileRef.
 	long addTile( char[] data, long dataSize, long flags,
-	             long lastRef, [Unsigned, Out] long resultRef);
+	             long lastRef, [Out] uint resultRef);
 
 	// If you really need removeTile, you can expose it, but it uses
-	// unsigned char** and int*, which is clumsy from IDL side. dtStatus removeTile(dtTileRef ref, unsigned char** data, int* dataSize);
+	// unsigned char** and int*, which is clumsy from IDL side.
+	// C++: dtStatus removeTile(dtTileRef ref, unsigned char** data, int* dataSize);
 	// long removeTile(long ref, [Ref] unsigned char[] data, [Ref] long dataSize);
- void calcTileLoc(const float* pos, int* tx, int* ty) const;
+
+	// C++: void calcTileLoc(const float* pos, int* tx, int* ty) const;
 	// 'pos' is length-3 [x,y,z], tx/ty are tile indices.
 	[Const] void calcTileLoc(float[] pos, [Const, Out] long tx, [Const, Out] long ty);
- bool isValidPolyRef(dtPolyRef ref) const;
+
+	// C++: bool isValidPolyRef(dtPolyRef ref) const;
 	[Const] boolean isValidPolyRef(long ref);
- int getMaxTiles() const;
+
+	// C++: int getMaxTiles() const;
 	[Const] long getMaxTiles();
- dtStatus setPolyFlags(dtPolyRef ref, unsigned short flags);
+
+	// C++: dtStatus setPolyFlags(dtPolyRef ref, unsigned short flags);
 	long setPolyFlags(long ref, short flags);
- dtStatus getPolyFlags(dtPolyRef ref, unsigned short* resultFlags) const;
+
+	// C++: dtStatus getPolyFlags(dtPolyRef ref, unsigned short* resultFlags) const;
 	[Const] long getPolyFlags(long ref, [Out] short flags);
- dtStatus setPolyArea(dtPolyRef ref, unsigned char area);
+
+	// C++: dtStatus setPolyArea(dtPolyRef ref, unsigned char area);
 	long setPolyArea(long ref, short area);
- dtStatus getPolyArea(dtPolyRef ref, unsigned char* resultArea) const;
+
+	// C++: dtStatus getPolyArea(dtPolyRef ref, unsigned char* resultArea) const;
 	[Const] long getPolyArea(long ref, [Out] char area);
 };
 
@@ -67,19 +85,26 @@ interface dtNavMesh { dtNavMesh::dtNavMesh();
 // Ref: DetourNavMeshQuery.h dtQueryFilter docs. :contentReference[oaicite:2]{index=2}
 // ---------------------------------------------------------------------------
 
-interface dtQueryFilter { dtQueryFilter::dtQueryFilter();
+interface dtQueryFilter {
+	// C++: dtQueryFilter::dtQueryFilter();
 	void dtQueryFilter();
- float getAreaCost(int i) const;
+
+	// C++: float getAreaCost(int i) const;
 	[Const] float getAreaCost(long i);
- void setAreaCost(int i, float cost);
+
+	// C++: void setAreaCost(int i, float cost);
 	void setAreaCost(long i, float cost);
- unsigned short getIncludeFlags() const;
+
+	// C++: unsigned short getIncludeFlags() const;
 	[Const] short getIncludeFlags();
- void setIncludeFlags(unsigned short flags);
+
+	// C++: void setIncludeFlags(unsigned short flags);
 	void setIncludeFlags(short flags);
- unsigned short getExcludeFlags() const;
+
+	// C++: unsigned short getExcludeFlags() const;
 	[Const] short getExcludeFlags();
- void setExcludeFlags(unsigned short flags);
+
+	// C++: void setExcludeFlags(unsigned short flags);
 	void setExcludeFlags(short flags);
 };
 
@@ -89,13 +114,16 @@ interface dtQueryFilter { dtQueryFilter::dtQueryFilter();
 // Ref: dtNavMeshQuery docs. :contentReference[oaicite:3]{index=3}
 // ---------------------------------------------------------------------------
 
-interface dtNavMeshQuery { dtNavMeshQuery::dtNavMeshQuery();
+interface dtNavMeshQuery {
+	// C++: dtNavMeshQuery::dtNavMeshQuery();
 	void dtNavMeshQuery();
- dtStatus init(const dtNavMesh* nav, const int maxNodes);
+
+	// C++: dtStatus init(const dtNavMesh* nav, const int maxNodes);
 	long init([Const] dtNavMesh nav, long maxNodes);
 
 	// --- Standard pathfinding ---
 
+	// C++:
 	// dtStatus findPath(
 	//     dtPolyRef startRef, dtPolyRef endRef,
 	//     const float* startPos, const float* endPos,
@@ -112,6 +140,7 @@ interface dtNavMeshQuery { dtNavMeshQuery::dtNavMeshQuery();
 		long maxPath
 	);
 
+	// C++:
 	// dtStatus findStraightPath(
 	//     const float* startPos, const float* endPos,
 	//     const dtPolyRef* path, const int pathSize,
@@ -134,6 +163,7 @@ interface dtNavMeshQuery { dtNavMeshQuery::dtNavMeshQuery();
 
 	// --- Local queries / helpers ---
 
+	// C++:
 	// dtStatus findNearestPoly(
 	//     const float* center, const float* extents,
 	//     const dtQueryFilter* filter,
@@ -146,6 +176,7 @@ interface dtNavMeshQuery { dtNavMeshQuery::dtNavMeshQuery();
 		float[] nearestPt  // [3]
 	);
 
+	// C++:
 	// dtStatus moveAlongSurface(
 	//     dtPolyRef startRef,
 	//     const float* startPos,
@@ -165,6 +196,7 @@ interface dtNavMeshQuery { dtNavMeshQuery::dtNavMeshQuery();
 		long maxVisitedSize
 	);
 
+	// C++:
 	// dtStatus getPolyHeight(
 	//     dtPolyRef ref,
 	//     const float* pos,
@@ -175,9 +207,11 @@ interface dtNavMeshQuery { dtNavMeshQuery::dtNavMeshQuery();
 		[Out] float height
 	);
 
+	// C++:
 	// bool isValidPolyRef(dtPolyRef ref, const dtQueryFilter* filter) const;
 	[Const] boolean isValidPolyRef(long ref, [Const] dtQueryFilter filter);
 
+	// C++:
 	// const dtNavMesh* getAttachedNavMesh() const;
 	[Const] dtNavMesh getAttachedNavMesh();
 };

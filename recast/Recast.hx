@@ -1,10 +1,17 @@
 package recast;
 
+// #if !macro
+// typedef Recast = haxe.macro.MacroType<[webidl.Module.build(( { idlFile : "recast/recast.idl", autoGC : true, nativeLib : "recast", target : TargetHL, /* packageName : "recast",  */chopPrefix : "dt"/* , architecture : ArchX86_64  */} : idl.Options ) )]>;
+// #else
 #if !macro
-typedef Recast = haxe.macro.MacroType<[webidl.Module.build( {
+typedef Recast = haxe.macro.MacroType<[idl.Module.build( {
 	idlFile : "recast/recast.idl",
+	chopPrefix : "dt",
 	autoGC : true,
-	nativeLib : "recast"
+	nativeLib : "recast",
+	packageName : "recast",
+	target : "hl",
+	architecture : "x86_64"
 } )]>;
 #else
 class Recast {
@@ -17,7 +24,7 @@ class Recast {
 	};
 
 	public static function build() {
-		config.chopPrefix = "dt";
+		// config.chopPrefix = "dt";
 		return webidl.Module.build( config );
 	}
 
