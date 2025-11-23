@@ -1,0 +1,183 @@
+// ---------------------------------------------------------------------------
+// Detour core scalar aliases (C++ side):
+//   typedef unsigned int dtPolyRef;
+//   typedef unsigned int dtTileRef;
+//   typedef unsigned int dtStatus;
+// In IDL we just use 'long' for these.
+// ---------------------------------------------------------------------------
+
+interface dtNavMeshParams {
+	// Origin of the navmesh tile grid. [(x, y, z)] float orig[3];
+	attribute float[] orig;
+ float tileWidth;
+	attribute float tileWidth;
+ float tileHeight;
+	attribute float tileHeight;
+ int maxTiles;
+	attribute long maxTiles;
+ int maxPolys;
+	attribute long maxPolys;
+};
+
+// ---------------------------------------------------------------------------
+// dtNavMesh
+// C++: class dtNavMesh { dtStatus init(...); dtStatus addTile(...); ... }
+// Ref: DetourNavMesh.h dtNavMesh, dtNavMeshParams, setPolyFlags/getPolyFlags
+// :contentReference[oaicite:1]{index=1}
+// ---------------------------------------------------------------------------
+
+interface dtNavMesh { dtNavMesh::dtNavMesh();
+	void dtNavMesh();
+ dtStatus init(const dtNavMeshParams* params);
+	long init([Const] dtNavMeshParams params);
+ dtStatus init(unsigned char* data, const int dataSize, const int flags);
+	// 'data' is a navmesh binary blob.
+	// long init( [Unsigned] char[] data, long dataSize, long flags);
+ const dtNavMeshParams* getParams() const;
+	[Const] dtNavMeshParams getParams();
+ dtStatus addTile(unsigned char* data, int dataSize, int flags,
+	//                      dtTileRef lastRef, dtTileRef* result);
+	// 'resultRef' receives the resulting dtTileRef.
+	long addTile( char[] data, long dataSize, long flags,
+	             long lastRef, [Unsigned, Out] long resultRef);
+
+	// If you really need removeTile, you can expose it, but it uses
+	// unsigned char** and int*, which is clumsy from IDL side. dtStatus removeTile(dtTileRef ref, unsigned char** data, int* dataSize);
+	// long removeTile(long ref, [Ref] unsigned char[] data, [Ref] long dataSize);
+ void calcTileLoc(const float* pos, int* tx, int* ty) const;
+	// 'pos' is length-3 [x,y,z], tx/ty are tile indices.
+	[Const] void calcTileLoc(float[] pos, [Const, Out] long tx, [Const, Out] long ty);
+ bool isValidPolyRef(dtPolyRef ref) const;
+	[Const] boolean isValidPolyRef(long ref);
+ int getMaxTiles() const;
+	[Const] long getMaxTiles();
+ dtStatus setPolyFlags(dtPolyRef ref, unsigned short flags);
+	long setPolyFlags(long ref, short flags);
+ dtStatus getPolyFlags(dtPolyRef ref, unsigned short* resultFlags) const;
+	[Const] long getPolyFlags(long ref, [Out] short flags);
+ dtStatus setPolyArea(dtPolyRef ref, unsigned char area);
+	long setPolyArea(long ref, short area);
+ dtStatus getPolyArea(dtPolyRef ref, unsigned char* resultArea) const;
+	[Const] long getPolyArea(long ref, [Out] char area);
+};
+
+// ---------------------------------------------------------------------------
+// dtQueryFilter
+// C++: class dtQueryFilter { setIncludeFlags, setExcludeFlags, setAreaCost, ... }
+// Ref: DetourNavMeshQuery.h dtQueryFilter docs. :contentReference[oaicite:2]{index=2}
+// ---------------------------------------------------------------------------
+
+interface dtQueryFilter { dtQueryFilter::dtQueryFilter();
+	void dtQueryFilter();
+ float getAreaCost(int i) const;
+	[Const] float getAreaCost(long i);
+ void setAreaCost(int i, float cost);
+	void setAreaCost(long i, float cost);
+ unsigned short getIncludeFlags() const;
+	[Const] short getIncludeFlags();
+ void setIncludeFlags(unsigned short flags);
+	void setIncludeFlags(short flags);
+ unsigned short getExcludeFlags() const;
+	[Const] short getExcludeFlags();
+ void setExcludeFlags(unsigned short flags);
+	void setExcludeFlags(short flags);
+};
+
+// ---------------------------------------------------------------------------
+// dtNavMeshQuery
+// C++: class dtNavMeshQuery { init, findPath, findStraightPath, findNearestPoly, ... }
+// Ref: dtNavMeshQuery docs. :contentReference[oaicite:3]{index=3}
+// ---------------------------------------------------------------------------
+
+interface dtNavMeshQuery { dtNavMeshQuery::dtNavMeshQuery();
+	void dtNavMeshQuery();
+ dtStatus init(const dtNavMesh* nav, const int maxNodes);
+	long init([Const] dtNavMesh nav, long maxNodes);
+
+	// --- Standard pathfinding ---
+
+	// dtStatus findPath(
+	//     dtPolyRef startRef, dtPolyRef endRef,
+	//     const float* startPos, const float* endPos,
+	//     const dtQueryFilter* filter,
+	//     dtPolyRef* path, int* pathCount, const int maxPath) const;
+	[Const] long findPath(
+		long startRef,
+		long endRef,
+		float[] startPos,    // [3]
+		float[] endPos,      // [3]
+		[Const] dtQueryFilter filter,
+		uint[] path,   // output polygon refs
+		[Out] long pathCount,
+		long maxPath
+	);
+
+	// dtStatus findStraightPath(
+	//     const float* startPos, const float* endPos,
+	//     const dtPolyRef* path, const int pathSize,
+	//     float* straightPath,
+	//     unsigned char* straightPathFlags,
+	//     dtPolyRef* straightPathRefs,
+	//     int* straightPathCount,
+	//     const int maxStraightPath) const;
+	[Const] long findStraightPath(
+		float[] startPos,          // [3]
+		float[] endPos,            // [3]
+		uint[] path,               // input poly corridor
+		long pathSize,
+		float[] straightPath,      // output positions, 3 * N
+		char[] straightPathFlags, // DT_STRAIGHTPATH_* (stored in short)
+		uint[] straightPathRefs,   // poly refs per point
+		[Out] long straightPathCount,
+		long maxStraightPath
+	);
+
+	// --- Local queries / helpers ---
+
+	// dtStatus findNearestPoly(
+	//     const float* center, const float* extents,
+	//     const dtQueryFilter* filter,
+	//     dtPolyRef* nearestRef, float* nearestPt) const;
+	[Const] long findNearestPoly(
+		float[] center,          // [3]
+		float[] extents,         // [3]
+		[Const] dtQueryFilter filter,
+		[Out] uint nearestRef,
+		float[] nearestPt  // [3]
+	);
+
+	// dtStatus moveAlongSurface(
+	//     dtPolyRef startRef,
+	//     const float* startPos,
+	//     const float* endPos,
+	//     const dtQueryFilter* filter,
+	//     float* resultPos,
+	//     dtPolyRef* visited, int* visitedCount,
+	//     const int maxVisitedSize) const;
+	[Const] long moveAlongSurface(
+		long startRef,
+		float[] startPos,        // [3]
+		float[] endPos,          // [3]
+		[Const] dtQueryFilter filter,
+		float[] resultPos, // [3]
+		uint[] visited,    // visited poly refs
+		[Out] long visitedCount,
+		long maxVisitedSize
+	);
+
+	// dtStatus getPolyHeight(
+	//     dtPolyRef ref,
+	//     const float* pos,
+	//     float* height) const;
+	[Const] long getPolyHeight(
+		long ref,
+		float[] pos,      // [3]
+		[Out] float height
+	);
+
+	// bool isValidPolyRef(dtPolyRef ref, const dtQueryFilter* filter) const;
+	[Const] boolean isValidPolyRef(long ref, [Const] dtQueryFilter filter);
+
+	// const dtNavMesh* getAttachedNavMesh() const;
+	[Const] dtNavMesh getAttachedNavMesh();
+};

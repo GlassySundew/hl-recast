@@ -1,0 +1,15 @@
+{
+	"name": "bullet",
+	"url": "https://github.com/GlassySundew/hl-recast",
+	"license": "BSD",
+	"contributors": [
+		"GlassySundew"
+	],
+	"description": "Recastnav support for hl",
+	"version": "1.0.0",
+	"releasenote": "",
+	"dependencies": {
+		"hl-idl": "",
+		"hvector": ""
+	}
+}
