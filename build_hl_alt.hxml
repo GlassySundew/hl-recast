@@ -1,5 +1,5 @@
 # -lib webidl
--lib hl-idl
+-lib hl-idl:git:https://github.com/GlassySundew/hl-idl
 -lib hvector
 # --macro "recast.Recast.buildLibCpp()"
 --run recast.BuildRecast
