@@ -1,15 +1,9 @@
-// ---------------------------------------------------------------------------
-// Detour core scalar aliases (C++ side):
-//   typedef unsigned int dtPolyRef;
-//   typedef unsigned int dtTileRef;
-//   typedef unsigned int dtStatus;
-// In IDL we just use 'long' for these.
-// ---------------------------------------------------------------------------
 
 interface dtNavMeshParams {
+
 	// Origin of the navmesh tile grid. [(x, y, z)]
 	// C++: float orig[3];
-	attribute float[] orig;
+	attribute float3 orig;
 
 	// C++: float tileWidth;
 	attribute float tileWidth;
@@ -24,14 +18,8 @@ interface dtNavMeshParams {
 	attribute long maxPolys;
 };
 
-// ---------------------------------------------------------------------------
-// dtNavMesh
-// C++: class dtNavMesh { dtStatus init(...); dtStatus addTile(...); ... }
-// Ref: DetourNavMesh.h dtNavMesh, dtNavMeshParams, setPolyFlags/getPolyFlags
-// :contentReference[oaicite:1]{index=1}
-// ---------------------------------------------------------------------------
-
 interface dtNavMesh {
+
 	// C++: dtNavMesh::dtNavMesh();
 	void dtNavMesh();
 
@@ -40,7 +28,7 @@ interface dtNavMesh {
 
 	// C++: dtStatus init(unsigned char* data, const int dataSize, const int flags);
 	// 'data' is a navmesh binary blob.
-	// long init( char[] data, long dataSize, long flags);
+	long init(bytes data, long dataSize, long flags);
 
 	// C++: const dtNavMeshParams* getParams() const;
 	[Const] dtNavMeshParams getParams();
@@ -51,8 +39,6 @@ interface dtNavMesh {
 	long addTile( char[] data, long dataSize, long flags,
 	             long lastRef, [Out] uint resultRef);
 
-	// If you really need removeTile, you can expose it, but it uses
-	// unsigned char** and int*, which is clumsy from IDL side.
 	// C++: dtStatus removeTile(dtTileRef ref, unsigned char** data, int* dataSize);
 	// long removeTile(long ref, [Ref] unsigned char[] data, [Ref] long dataSize);
 
@@ -76,16 +62,11 @@ interface dtNavMesh {
 	long setPolyArea(long ref, short area);
 
 	// C++: dtStatus getPolyArea(dtPolyRef ref, unsigned char* resultArea) const;
-	[Const] long getPolyArea(long ref, [Out] char area);
+	[Const] long getPolyArea(long ref, [Const, Out] char area);
 };
 
-// ---------------------------------------------------------------------------
-// dtQueryFilter
-// C++: class dtQueryFilter { setIncludeFlags, setExcludeFlags, setAreaCost, ... }
-// Ref: DetourNavMeshQuery.h dtQueryFilter docs. :contentReference[oaicite:2]{index=2}
-// ---------------------------------------------------------------------------
-
 interface dtQueryFilter {
+
 	// C++: dtQueryFilter::dtQueryFilter();
 	void dtQueryFilter();
 
@@ -108,13 +89,8 @@ interface dtQueryFilter {
 	void setExcludeFlags(short flags);
 };
 
-// ---------------------------------------------------------------------------
-// dtNavMeshQuery
-// C++: class dtNavMeshQuery { init, findPath, findStraightPath, findNearestPoly, ... }
-// Ref: dtNavMeshQuery docs. :contentReference[oaicite:3]{index=3}
-// ---------------------------------------------------------------------------
-
 interface dtNavMeshQuery {
+
 	// C++: dtNavMeshQuery::dtNavMeshQuery();
 	void dtNavMeshQuery();
 
@@ -160,8 +136,6 @@ interface dtNavMeshQuery {
 		[Out] long straightPathCount,
 		long maxStraightPath
 	);
-
-	// --- Local queries / helpers ---
 
 	// C++:
 	// dtStatus findNearestPoly(

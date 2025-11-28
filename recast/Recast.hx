@@ -1,8 +1,18 @@
 package recast;
 
-// #if !macro
-// typedef Recast = haxe.macro.MacroType<[webidl.Module.build(( { idlFile : "recast/recast.idl", autoGC : true, nativeLib : "recast", target : TargetHL, /* packageName : "recast",  */chopPrefix : "dt"/* , architecture : ArchX86_64  */} : idl.Options ) )]>;
-// #else
+extern class RecastStatic {
+
+	@:hlNative( "recast", "debugPrintDetourVersionCpp" )
+	public static function debugPrintDetourVersionCpp() : Void;
+
+	@:hlNative( "recast", "dtNavMesh_initFromSet" )
+	public static function initNavMeshFromSet(
+		navMesh : recast.Recast.NavMesh,
+		data : hl.Bytes,
+		dataSize : Int
+	) : Int;
+}
+
 #if !macro
 typedef Recast = haxe.macro.MacroType<[idl.Module.build( {
 	idlFile : "recast/recast.idl",

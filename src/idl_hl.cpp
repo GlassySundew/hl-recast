@@ -305,6 +305,99 @@ inline static void _idc_copy_array( varray *dst, double *src,  int count) {
 			return context->spans[pos];
 		}
 
+		HL_PRIM void HL_NAME(debugPrintDetourVersionCpp)() {
+			printf("C++ Detour: MAGIC=0x%X VERSION=0x%X\n",
+				DT_NAVMESH_MAGIC,
+				DT_NAVMESH_VERSION
+			);
+		}
+		DEFINE_PRIM(_VOID, debugPrintDetourVersionCpp, _NO_ARG);
+
+		struct RecastHeader {
+			int magic;
+			int version;
+			int numTiles;
+		};
+
+		struct NavMeshSetHeader {
+			dtNavMeshParams params;
+		};
+
+		struct NavMeshTileHeader {
+			dtTileRef tileRef;
+			int dataSize;
+		};
+
+		static const int NAVMESHSET_MAGIC = 'MSET';
+		static const int NAVMESHSET_VERSION = 1;
+
+		HL_PRIM int HL_NAME(dtNavMesh_initFromSet)(
+			pref<dtNavMesh>* _this,
+			vbyte* bytes,
+			int dataSize
+			) {
+			unsigned char* bits = (unsigned char*)bytes;
+			unsigned char* end = bits + dataSize;
+
+			if (dataSize < (int)sizeof(RecastHeader) + (int)sizeof(NavMeshSetHeader))
+				return (int)DT_INVALID_PARAM;
+
+			RecastHeader recastHeader;
+			memcpy(&recastHeader, bits, sizeof(recastHeader));
+			bits += sizeof(recastHeader);
+
+			if (recastHeader.magic != NAVMESHSET_MAGIC || recastHeader.version != NAVMESHSET_VERSION)
+				return (int)(DT_FAILURE | DT_WRONG_MAGIC);
+
+			NavMeshSetHeader header;
+			memcpy(&header, bits, sizeof(header));
+			bits += sizeof(header);
+
+			dtNavMesh* mesh = _unref(_this);
+			dtStatus status = mesh->init(&header.params);
+			if (dtStatusFailed(status))
+				return (int)status;
+
+			for (int i = 0; i < recastHeader.numTiles; ++i) {
+				if (bits + sizeof(NavMeshTileHeader) > end)
+					break;
+
+				NavMeshTileHeader tileHeader;
+				memcpy(&tileHeader, bits, sizeof(tileHeader));
+				bits += sizeof(tileHeader);
+
+				if (!tileHeader.tileRef || !tileHeader.dataSize)
+					break;
+
+				if (bits + tileHeader.dataSize > end)
+					break;
+
+				unsigned char* data = (unsigned char*)dtAlloc(tileHeader.dataSize, DT_ALLOC_PERM);
+				if (!data)
+					return (int)(DT_FAILURE | DT_OUT_OF_MEMORY);
+
+				memcpy(data, bits, tileHeader.dataSize);
+				bits += tileHeader.dataSize;
+
+				dtTileRef outRef = 0;
+				dtStatus addStatus = mesh->addTile(
+					data,
+					tileHeader.dataSize,
+					DT_TILE_FREE_DATA,   // Detour owns and frees the tile data
+					tileHeader.tileRef,
+					&outRef
+				);
+
+				if (dtStatusFailed(addStatus)) {
+					dtFree(data);
+					return (int)addStatus;
+				}
+			}
+
+			return (int)DT_SUCCESS;
+		}
+		DEFINE_PRIM(_I32, dtNavMesh_initFromSet, _IDL _BYTES _I32);
+
 
 
 
@@ -331,15 +424,28 @@ HL_PRIM void HL_NAME(dtNavMeshQuery_delete)( pref<dtNavMeshQuery>* _this ) {
 	free_ref(_this );
 }
 DEFINE_PRIM(_VOID, dtNavMeshQuery_delete, _IDL);
-HL_PRIM float HL_NAME(dtNavMeshParams_get_orig)( pref<dtNavMeshParams>* _this, int index ) {
-	return _unref(_this)->orig[index];
+HL_PRIM h_float3 HL_NAME(dtNavMeshParams_get_orig)( pref<dtNavMeshParams>* _this ) {
+	return (h_float3 )(_unref(_this)->orig);
 }
-DEFINE_PRIM(_F32,dtNavMeshParams_get_orig,_IDL _I32);
-HL_PRIM float HL_NAME(dtNavMeshParams_set_orig)( pref<dtNavMeshParams>* _this, int index, float value ) {
-	_unref(_this)->orig[index] = (value);
+HL_PRIM void HL_NAME(dtNavMeshParams_getorigv)( pref<dtNavMeshParams>* _this, h_float3 value ) {
+	 float *src = (float*) & (_unref(_this)->orig)[0];
+	 float *dst = (float*) value;
+	dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2];
+}
+DEFINE_PRIM(_VOID,dtNavMeshParams_getorigv,_IDL _STRUCT  );
+DEFINE_PRIM(_STRUCT,dtNavMeshParams_get_orig,_IDL);
+HL_PRIM h_float3 HL_NAME(dtNavMeshParams_set_orig)( pref<dtNavMeshParams>* _this, h_float3 value ) {
+	 float *dst = (float*) & (_unref(_this)->orig)[0];
+	 float *src = (float*) value;
+	dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2];
 	return value;
 }
-DEFINE_PRIM(_F32,dtNavMeshParams_set_orig,_IDL _I32 _F32); // Array setter
+HL_PRIM void HL_NAME(dtNavMeshParams_setorig3)( pref<dtNavMeshParams>* _this,  float value0, float value1, float value2 ) {
+	 float *p = (_unref(_this)->orig);
+	p[0] = value0; p[1] = value1; p[2] = value2;
+}
+DEFINE_PRIM(_VOID,dtNavMeshParams_setorig3,_IDL _F32 _F32 _F32 );
+DEFINE_PRIM(_STRUCT,dtNavMeshParams_set_orig,_IDL _STRUCT);
 
 HL_PRIM float HL_NAME(dtNavMeshParams_get_tileWidth)( pref<dtNavMeshParams>* _this ) {
 	return _unref(_this)->tileWidth;
@@ -390,6 +496,11 @@ HL_PRIM int HL_NAME(dtNavMesh_init1)(pref<dtNavMesh>* _this, pref<dtNavMeshParam
 	return (_unref(_this)->init(_unref_ptr_safe(params)));
 }
 DEFINE_PRIM(_I32, dtNavMesh_init1, _IDL _IDL);
+
+HL_PRIM int HL_NAME(dtNavMesh_init3)(pref<dtNavMesh>* _this, vbyte* data, int dataSize, int flags) {
+	return (_unref(_this)->init(data, dataSize, flags));
+}
+DEFINE_PRIM(_I32, dtNavMesh_init3, _IDL _BYTES _I32 _I32);
 
 HL_PRIM HL_CONST pref<dtNavMeshParams>* HL_NAME(dtNavMesh_getParams0)(pref<dtNavMesh>* _this) {
 	return alloc_ref_const((_unref(_this)->getParams()),dtNavMeshParams);
