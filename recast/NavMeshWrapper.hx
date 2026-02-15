@@ -4,13 +4,27 @@ import haxe.io.Bytes;
 import hl.NativeArray;
 import hl.Ref;
 import h3d.col.Point;
-import recast.Recast.RecastStatic;
+import recast.DetourStatus;
 import recast.Recast;
+
+enum PathStatus {
+
+	NOT_LOADED;
+	INVALID_START_OR_END;
+	NO_PATH;
+	OK;
+}
+
+typedef PathResult = {
+	final status : PathStatus;
+	@:optional final statusList : Array<StatusType>;
+	@:optional final path : Array<Point>;
+};
 
 class NavMeshWrapper {
 
 	static final EXT_X = 2;
-	static final EXT_Y = 4;
+	static final EXT_Y = 25;
 	static final EXT_Z = 2;
 
 	static final MAX_PATH = 256;
@@ -57,7 +71,16 @@ class NavMeshWrapper {
 		#end
 	}
 
-	public function findPath( start : Point, end : Point ) : Array<Point> {
+	public function findPath(
+		start : Point,
+		end : Point,
+		?searchExtents : Point
+	) : PathResult {
+
+		var status : PathStatus = OK;
+		var statusList : Array<StatusType> = null;
+		if ( searchExtents == null )
+			searchExtents = new Point( EXT_X, EXT_Z, EXT_Y );
 
 		// recast y up
 		startPtr[0] = start.x;
@@ -68,9 +91,9 @@ class NavMeshWrapper {
 		endPtr[1] = end.z;
 		endPtr[2] = -end.y;
 
-		ext[0] = EXT_X;
-		ext[1] = EXT_Y;
-		ext[2] = EXT_Z;
+		ext[0] = searchExtents.x;
+		ext[1] = searchExtents.y;
+		ext[2] = searchExtents.z;
 
 		var startVal = 0;
 		final startRef = new Ref<Int>( startVal );
@@ -83,7 +106,7 @@ class NavMeshWrapper {
 
 		if ( startRef.get() == 0 || endRef.get() == 0 ) {
 
-			trace( 'No valid start or end poly' );
+			status = INVALID_START_OR_END;
 		}
 
 		var pathCountVal = 0;
@@ -102,8 +125,11 @@ class NavMeshWrapper {
 		final findPathSt = DetourStatus.fromInt( st );
 
 		#if debug
-		if ( !findPathSt.contains( SUCCESS ) )
-			trace( "error while finding path: " + findPathSt );
+		if ( !findPathSt.contains( SUCCESS ) ) {
+
+			statusList = findPathSt;
+			status = NO_PATH;
+		}
 		#end
 
 		final maxStraight = MAX_PATH;
@@ -136,6 +162,6 @@ class NavMeshWrapper {
 			out[i] = new Point( rx, -rz, ry );
 		}
 
-		return out;
+		return { status : status, statusList : statusList, path : out };
 	}
 }

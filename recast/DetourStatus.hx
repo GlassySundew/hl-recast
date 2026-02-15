@@ -36,17 +36,17 @@ class DetourStatus {
 
 	public static function fromInt( dtStatus : Int ) : Array<StatusType> {
 
-		if ( failed( dtStatus ) )
-			return [FAILURE];
-
-		if ( succeed( dtStatus ) )
-			return [SUCCESS];
-
-		if ( inProgress( dtStatus ) )
-			return [IN_PROGRESS];
-
 		final d = detail( dtStatus );
 		final out = [];
+
+		if ( failed( dtStatus ) )
+			out.push( FAILURE );
+
+		if ( succeed( dtStatus ) )
+			out.push( SUCCESS );
+
+		if ( inProgress( dtStatus ) )
+			out.push( IN_PROGRESS );
 
 		if (( d & DT_WRONG_MAGIC ) != 0 )
 			out.push( WRONG_MAGIC );
