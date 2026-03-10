@@ -21,7 +21,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{28daf8d2-d8e1-4f0c-b8cf-9ef03815061c}</ProjectGuid>
+    <ProjectGuid>{0E27F7AE-E35A-41AE-BE96-C104AA66CBF5}</ProjectGuid>
     <RootNamespace>recastnav</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
