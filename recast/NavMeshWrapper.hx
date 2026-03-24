@@ -23,9 +23,9 @@ typedef PathResult = {
 
 class NavMeshWrapper {
 
-	static final EXT_X = 2;
-	static final EXT_Y = 25;
-	static final EXT_Z = 2;
+	static final EXT_X = 4;
+	static final EXT_Y = 4;
+	static final EXT_Z = 35;
 
 	static final MAX_PATH = 256;
 
@@ -80,7 +80,7 @@ class NavMeshWrapper {
 		var status : PathStatus = OK;
 		var statusList : Array<StatusType> = null;
 		if ( searchExtents == null )
-			searchExtents = new Point( EXT_X, EXT_Z, EXT_Y );
+			searchExtents = new Point( EXT_X, EXT_Y, EXT_Z );
 
 		// recast y up
 		startPtr[0] = start.x;
@@ -92,27 +92,32 @@ class NavMeshWrapper {
 		endPtr[2] = -end.y;
 
 		ext[0] = searchExtents.x;
-		ext[1] = searchExtents.y;
-		ext[2] = searchExtents.z;
+		ext[1] = searchExtents.z;
+		ext[2] = searchExtents.y;
 
 		var startVal = 0;
 		final startRef = new Ref<Int>( startVal );
 		var endVal = 0;
 		final endRef = new Ref<Int>( endVal );
 
-		var st = query.findNearestPoly( startPtr, ext, filter, startRef, nearestStart );
-
-		st = query.findNearestPoly( endPtr, ext, filter, endRef, nearestEnd );
+		var startStat = DetourStatus.fromInt(
+			query.findNearestPoly( startPtr, ext, filter, startRef, nearestStart )
+		);
+		var endStat = DetourStatus.fromInt(
+			query.findNearestPoly( endPtr, ext, filter, endRef, nearestEnd )
+		);
 
 		if ( startRef.get() == 0 || endRef.get() == 0 ) {
 
 			status = INVALID_START_OR_END;
+			trace( "invalid start or end: " + startStat, endStat );
+			return { status : status, statusList : statusList, path : [] };
 		}
 
 		var pathCountVal = 0;
 		final pathCountRef = new Ref<Int>( pathCountVal );
 
-		st = query.findPath(
+		var st = query.findPath(
 			startRef.get(),
 			endRef.get(),
 			nearestStart,
@@ -129,6 +134,7 @@ class NavMeshWrapper {
 
 			statusList = findPathSt;
 			status = NO_PATH;
+			trace( "no path" );
 		}
 		#end
 
