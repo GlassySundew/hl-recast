@@ -18,11 +18,11 @@ add_definitions(-fpermissive)
 include(GNUInstallDirs)
 set(HDLL_DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-# Path to the recastnavigation sources vendor’d into this project
+# Path to the vendored recastnavigation sources
 set(RECAST_DIR lib/recastnavigation)
 
-# Path to your hashlink checkout
-set(HASHLINK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../hashlink)
+# HashLink repository root
+set(HASHLINK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 # Includes for recastnavigation modules + hashlink
 include_directories(
@@ -34,10 +34,6 @@ include_directories(
     ${HASHLINK_DIR}/src
 )
 
-if (NOT WIN32)
-    link_directories(${HASHLINK_DIR})
-    link_directories(/usr/local/lib)
-endif()
 
 # All core Recast/Detour sources (no RecastDemo)
 set(RECAST_SOURCES
@@ -100,14 +96,20 @@ add_library(recast.hdll SHARED
 
 if (WIN32)
     # Same trick as bullet: $(Platform) is the VS generator variable
-    target_link_directories(recast.hdll PRIVATE "${HASHLINK_DIR}/$(Platform)")
+    target_link_directories(recast.hdll PRIVATE "${HASHLINK_DIR}/$(Platform)/$<CONFIG>")
     target_link_libraries(recast.hdll
         libhl
     )
 else()
-    target_link_libraries(recast.hdll
-        hl
+    string(REPLACE ":" ";" HASHLINK_LIBRARY_PATHS "$ENV{LD_LIBRARY_PATH}")
+    find_library(HASHLINK_LIBRARY NAMES hl
+        HINTS ${HASHLINK_LIBRARY_PATHS}
+        PATHS "${HASHLINK_DIR}/linux_bin" "${HASHLINK_DIR}"
     )
+    if(NOT HASHLINK_LIBRARY)
+        message(FATAL_ERROR "Could not find libhl.so. Build HashLink first or set LD_LIBRARY_PATH to its directory.")
+    endif()
+    target_link_libraries(recast.hdll PRIVATE "${HASHLINK_LIBRARY}")
 endif()
 
 target_include_directories(recast.hdll
@@ -122,9 +124,10 @@ target_include_directories(recast.hdll
 
 set_as_hdll(recast)
 
-# Drop recast.hdll directly into the hashlink root (same as bullet)
+# Drop recast.hdll directly into the HashLink root
 set_target_properties(recast.hdll PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${HASHLINK_DIR}
+    RUNTIME_OUTPUT_DIRECTORY ${HASHLINK_DIR}
 )
 
 # Optional override for install location on Windows (mirror bullet)
